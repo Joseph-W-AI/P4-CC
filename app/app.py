@@ -1,37 +1,48 @@
 from flask import Flask, jsonify, request
 from models import db, Hero, Power, HeroPower
 from flask_migrate import Migrate
+from models import HeroSchema, PowerSchema
+
 
 app = Flask(__name__)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 migrate = Migrate(app, db)
 db.init_app(app)
 
+hero_schema = HeroSchema()
+heroes_schema = HeroSchema(many=True) 
+power_schema = PowerSchema() 
+powers_schema = PowerSchema(many=True)
+
 @app.route('/heroes', methods=['GET'])
 def get_heroes():
     heroes = Hero.query.all()
-    return jsonify([hero.serialize for hero in heroes])
+    result = heroes_schema.dump(heroes)
+    return jsonify(result)
 
 @app.route('/heroes/<int:id>', methods=['GET'])
 def get_hero(id):
     hero = Hero.query.get(id)
     if hero is None:
         return jsonify({'error': 'Hero not found'}), 404
-    return jsonify(hero.serialize)
+    result = hero_schema.dump(hero)
+    return jsonify(result)
 
 @app.route('/powers', methods=['GET'])
 def get_powers():
     powers = Power.query.all()
-    return jsonify([power.serialize for power in powers])
+    result = powers_schema.dump(powers)
+    return jsonify(result)
 
 @app.route('/powers/<int:id>', methods=['GET'])
 def get_power(id):
     power = Power.query.get(id)
     if power is None:
         return jsonify({'error': 'Power not found'}), 404
-    return jsonify(power.serialize)
+    return power_schema.jsonify(power)
 
 @app.route('/powers/<int:id>', methods=['PATCH'])
 def update_power(id):
@@ -43,7 +54,7 @@ def update_power(id):
         return jsonify({'errors': ['validation errors']}), 400
     power.description = description
     db.session.commit()
-    return jsonify(power.serialize)
+    return power_schema.jsonify(power)
 
 @app.route('/hero_powers', methods=['POST'])
 def create_hero_power():
@@ -59,7 +70,7 @@ def create_hero_power():
     hero_power = HeroPower(strength=strength, power=power, hero=hero)
     db.session.add(hero_power)
     db.session.commit()
-    return jsonify(hero.serialize)
+    return hero_schema.jsonify(hero)
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

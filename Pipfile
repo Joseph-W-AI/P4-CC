@@ -8,6 +8,8 @@ flask = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
 Werkzeug = "2.2.2"
+pytz = "*"
+flask-marshmallow = "*"
 
 [dev-packages]
 
